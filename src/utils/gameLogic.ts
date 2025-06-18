@@ -7,6 +7,7 @@ export const createEmptyBoard = (): Board =>
 
 export const generateBlock = (): Block => {
   const shapes: (0 | 1)[][][] = [
+    [[1]],
     [
       [1, 1],
       [1, 1],
