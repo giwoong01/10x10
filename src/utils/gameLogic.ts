@@ -1,73 +1,21 @@
 import { Board, Block, Position } from "../types";
+import {
+  BOARD_HEIGHT,
+  BOARD_WIDTH,
+  BLOCK_SHAPES,
+  BLOCKS_TO_GENERATE,
+  HIGH_SCORE_STORAGE_KEY,
+  LINES_FOR_LEVEL_UP,
+} from "../constants/game";
 
 export const createEmptyBoard = (): Board =>
-  Array(10)
+  Array(BOARD_HEIGHT)
     .fill(null)
-    .map(() => Array(10).fill(0));
+    .map(() => Array(BOARD_WIDTH).fill(0));
 
 export const generateBlock = (): Block => {
-  const shapes: (0 | 1)[][][] = [
-    [[1]],
-    [
-      [1, 1],
-      [1, 1],
-    ], // 2x2
-    [
-      [1, 1, 1],
-      [1, 1, 1],
-      [1, 1, 1],
-    ],
-    [[1, 1]], // 2x1
-    [[1, 1, 1]], // 1x3
-    [[1, 1, 1, 1]], // 4x1
-    [[1], [1]], // 1x2
-    [[1], [1], [1]], // 3x1
-    [[1], [1], [1], [1]], // 1x4
-    [
-      [1, 1, 1],
-      [0, 1, 0],
-    ],
-    [
-      [0, 1, 0],
-      [1, 1, 1],
-    ],
-    [
-      [0, 1],
-      [1, 1],
-      [0, 1],
-    ],
-    [
-      [1, 0],
-      [1, 1],
-      [1, 0],
-    ],
-    [
-      [1, 1, 0],
-      [0, 1, 1],
-    ],
-    [
-      [0, 1, 1],
-      [1, 1, 0],
-    ],
-    [
-      [1, 0],
-      [1, 1],
-    ], // ㄴ
-    [
-      [0, 1],
-      [1, 1],
-    ], // 반대 ㄴ
-    [
-      [1, 1, 1],
-      [1, 0, 0],
-    ],
-    [
-      [1, 1, 1],
-      [0, 0, 1],
-    ],
-  ];
-
-  const randomShape = shapes[Math.floor(Math.random() * shapes.length)];
+  const randomShape =
+    BLOCK_SHAPES[Math.floor(Math.random() * BLOCK_SHAPES.length)];
 
   return {
     id: Math.random().toString(36).substr(2, 9),
@@ -76,7 +24,7 @@ export const generateBlock = (): Block => {
 };
 
 export const generateBlocks = (): Block[] => {
-  return [generateBlock(), generateBlock(), generateBlock()];
+  return Array.from({ length: BLOCKS_TO_GENERATE }, () => generateBlock());
 };
 
 export const canPlaceBlock = (
@@ -91,9 +39,9 @@ export const canPlaceBlock = (
       return (
         cell === 0 ||
         (boardRow >= 0 &&
-          boardRow < 10 &&
+          boardRow < BOARD_HEIGHT &&
           boardCol >= 0 &&
-          boardCol < 10 &&
+          boardCol < BOARD_WIDTH &&
           board[boardRow][boardCol] === 0)
       );
     })
@@ -111,7 +59,12 @@ export const placeBlock = (
       if (cell === 1) {
         const boardRow = position.row + r;
         const boardCol = position.col + c;
-        if (boardRow >= 0 && boardRow < 10 && boardCol >= 0 && boardCol < 10) {
+        if (
+          boardRow >= 0 &&
+          boardRow < BOARD_HEIGHT &&
+          boardCol >= 0 &&
+          boardCol < BOARD_WIDTH
+        ) {
           newBoard[boardRow][boardCol] = 1;
         }
       }
@@ -125,7 +78,7 @@ export const clearFullLines = (board: Board): [Board, number] => {
   const newBoard = board.map((row) => [...row]);
 
   // 가로 줄 체크
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < BOARD_HEIGHT; i++) {
     if (newBoard[i].every((cell) => cell === 1)) {
       newBoard[i].fill(0) as (0 | 1 | 2)[];
       linesCleared++;
@@ -133,9 +86,9 @@ export const clearFullLines = (board: Board): [Board, number] => {
   }
 
   // 세로 줄 체크
-  for (let j = 0; j < 10; j++) {
+  for (let j = 0; j < BOARD_WIDTH; j++) {
     if (newBoard.every((row) => row[j] === 1)) {
-      for (let i = 0; i < 10; i++) {
+      for (let i = 0; i < BOARD_HEIGHT; i++) {
         newBoard[i][j] = 0;
       }
       linesCleared++;
@@ -150,8 +103,8 @@ export const isGameOver = (board: Board, blocks: Block[]): boolean => {
   // 모든 블록에 대해 배치 가능한 위치가 있는지 확인
   return blocks.every((block) => {
     // 보드의 모든 위치에서 블록을 배치할 수 있는지 확인
-    for (let row = 0; row < 10; row++) {
-      for (let col = 0; col < 10; col++) {
+    for (let row = 0; row < BOARD_HEIGHT; row++) {
+      for (let col = 0; col < BOARD_WIDTH; col++) {
         if (canPlaceBlock(board, block, { row, col })) {
           return false; // 하나라도 배치 가능하면 게임 오버 아님
         }
@@ -165,16 +118,16 @@ export const isGameOver = (board: Board, blocks: Block[]): boolean => {
 export const saveHighScore = (score: number): void => {
   const currentHigh = getHighScore();
   if (score > currentHigh) {
-    localStorage.setItem("1010-high-score", score.toString());
+    localStorage.setItem(HIGH_SCORE_STORAGE_KEY, score.toString());
   }
 };
 
 export const getHighScore = (): number => {
-  const saved = localStorage.getItem("1010-high-score");
+  const saved = localStorage.getItem(HIGH_SCORE_STORAGE_KEY);
   return saved ? parseInt(saved, 10) : 0;
 };
 
 // 레벨 계산 함수
 export const calculateLevel = (linesCleared: number): number => {
-  return Math.floor(linesCleared / 10) + 1;
+  return Math.floor(linesCleared / LINES_FOR_LEVEL_UP) + 1;
 };
